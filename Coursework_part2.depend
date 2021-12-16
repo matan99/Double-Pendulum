@@ -1,0 +1,13 @@
+# depslib dependency file v1.0
+1609367381 source:c:\users\mike hamburger\desktop\computing and numerical methods\coursework_part2\main.cpp
+	<iostream>
+	<fstream>
+	<cmath>
+	<iomanip>
+
+1611090641 source:c:\users\mike hamburger\desktop\computing 2\coursework_part2\main.cpp
+	<iostream>
+	<fstream>
+	<cmath>
+	<iomanip>
+

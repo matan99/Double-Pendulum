@@ -1,0 +1,147 @@
+#include <iostream>
+#include <fstream>
+#include <cmath>
+#include <iomanip>
+
+using namespace std;
+const float g=9.81;
+
+void array_addition(double* added, double* array1, double* adding, int length);
+void array_multiplication(double* multiplied, double* array1, float multiplier, int length);
+void double_Pend(double* output_Val, double* m, double* l, double* v);
+void print_array(double a[])
+{
+
+    for(int i=0; i<4;i++)
+    {
+        cout<< a[i] << "\t";
+    }
+}
+int main()
+{
+cout << sin(1.571);
+    // read from file and store variables
+    double m[2],l[2], theta_1, theta_2, delta_t, T;
+
+    ifstream parameters;
+    parameters.open("parameters.txt");
+
+    if(parameters.good())
+    {
+    parameters >> m[0] >> m[1] >> l[0] >> l[1] >> theta_1 >> theta_2 >> delta_t >> T;
+    cout << T;
+    }
+    else
+    {
+        cout << "File failed to open" << endl;
+    }
+    parameters.close();
+
+    // create array called values to store each iteration and a corresponding time array called t
+    int length = T/delta_t+1;
+    double t[length];
+    for(int i=0; i<length; i++)
+    {
+        t[i]=i*delta_t;
+    }
+
+    // set initial conditions for values
+    double (* values)[4]=new double[length][4];
+    values[0][0]=theta_1;
+    values[0][1]=0;
+    values[0][2]=theta_2;
+    values[0][3]=0;
+
+    // create file for output values
+    ofstream results;
+    results.open("output6bi2.txt");
+    results << setw(15) << "time" ;
+    results << setw(15) << "X_1";
+    results << setw(15) << "Y_1";
+    results << setw(15) << "X_2";
+    results << setw(15) << "Y_2" << endl;
+    results << setw(15) << t[0] ;
+    results << setw(15) << l[0]*sin(values[0][0]);
+    results << setw(15) << -l[0]*cos(values[0][0]);
+    results << setw(15) << l[0]*sin(values[0][0])+l[1]*sin(values[0][2]);
+    results << setw(15) << -l[0]*cos(values[0][0])-l[1]*cos(values[0][2]) << endl;
+
+    // apply 4th Order RK
+    double temp[4], k1[4], k2[4], k3[4], k4[4], k1_weight[4], k2_weight[4], k3_weight[4], k4_weight[4];
+    for(int i=0; i<length-1; i++)
+    {
+
+        //k1
+        double_Pend(temp,m,l,values[i]);
+        array_multiplication(k1,temp,delta_t,4);
+        array_multiplication(k1_weight,k1,1.0f/6,4);
+
+        //k2
+        array_multiplication(temp,k1,0.5,4);
+        array_addition(k2,temp,values[i],4);
+        double_Pend(temp,m,l,k2);
+        array_multiplication(k2,temp,delta_t,4);
+        array_multiplication(k2_weight,k2,1.0f/3,4);
+
+        //k3
+        array_multiplication(temp,k2,0.5,4);
+        array_addition(k3,temp,values[i],4);
+        double_Pend(temp,m,l,k3);
+        array_multiplication(k3,temp,delta_t,4);
+        array_multiplication(k3_weight,k3,1.0f/3,4);
+
+        //k4
+        array_addition(k4,k3,values[i],4);
+        double_Pend(temp,m,l,k4);
+        array_multiplication(k4,temp,delta_t,4);
+        array_multiplication(k4_weight,k4,1.0f/6,4);
+
+        // Sum all k values to calculate new value iteration
+        array_addition(temp,values[i],k1_weight,4);
+        array_addition(temp,temp,k2_weight,4);
+        array_addition(temp,temp,k3_weight,4);
+        array_addition(values[i+1],temp,k4_weight,4);
+
+
+
+        results << setw(15) << t[i+1] ;
+        results << setw(15) << l[0]*sin(values[i+1][0]);
+        results << setw(15) << -l[0]*cos(values[i+1][0]);
+        results << setw(15) << l[0]*sin(values[i+1][0])+l[1]*sin(values[i+1][2]);
+        results << setw(15) << -l[0]*cos(values[i+1][0])-l[1]*cos(values[i+1][2]) << endl;
+    }
+    results.close();
+}
+
+
+
+void double_Pend(double* output_Val, double* m, double* l, double* v){
+    double a,b,c,d,e,f;
+    double d_Theta=v[0]-v[2];
+    a=(m[0]+m[1])*l[0];
+    b= m[1]*l[1]*cos(d_Theta);
+    c= l[0]*cos(d_Theta);
+    d=l[1];
+    e=-m[1]*l[1]*sin(d_Theta)*(v[3]*v[3])-(m[0]+m[1])*g*sin(v[0]);
+    f= l[0]*sin(d_Theta)*(v[1]*v[1])-g*sin(v[2]);
+    output_Val[0]=v[1];
+    output_Val[1]=(e*d-b*f)/(a*d-b*c);
+    output_Val[2]=v[3];
+    output_Val[3]=(a*f-e*c)/(a*d-b*c);
+}
+
+void array_addition(double* added, double* array1, double* adding, int length)
+{
+    for(int i=0; i<length; i++)
+    {
+        added[i]=array1[i]+adding[i];
+    }
+}
+
+void array_multiplication(double* multiplied, double* array1, float multiplier, int length)
+{
+    for(int i=0; i<length; i++)
+    {
+        multiplied[i]=array1[i]*multiplier;
+    }
+}
